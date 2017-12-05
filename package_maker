@@ -1,8 +1,75 @@
 #!/bin/bash
 
-if [ `uname` != Darwin ]; then exit 1 ;fi
+function myhelp(){
+    cat << _HELP
 
-function make_postinstall(){
+** This script works on only macOS computer. **
+
+    $0 -u username -s your.server.org
+    $0 -h
+
+    $0 will create key pair for transport user's key pair for your server access in transfer-keys directory.
+    $0 will create package in packages directory.
+
+_HELP
 }
 
+function make_postinstall(){
+    KEY=$1
+    SERVER=$2
+    USER=$3
+    SCRIPT=$4
+    PATH_TO=$5
+    cat << _POSTINSTALL
+#!/bin/bash
+${PATH_TO}/$SCRIPT $KEY $SERVER $USER
+_POSTINSTALL
+}
+
+while getopts :u:s:h? OPT
+do
+    case $OPT in
+        u)
+            username=$OPTARG
+            ;;
+        s)
+            servername=$OPTARG
+            ;;
+        :|\?|h)
+            SHOW_HELP=yes
+            ;;
+    esac
+done
+
+if [ `uname` != Darwin ]; then SHOW_HELP=yes ;fi
+if [ ${username}X = X ]; then SHOW_HELP=yes ;fi
+if [ ${servername}X = X ]; then SHOW_HELP=yes ;fi
+if [ ${SHOW_HELP:-no} = yes ]; then myhelp ;fi
+
+SCRIPTDIR=`dirname $0`
+TRANSFER_KEY="${SCRIPTDIR}/transfer-keys/transfer_${username}_${servername}.rsa"
+KEYMAKER="${SCRIPTDIR}/scripts/ssh-key-maker"
+SOURCE=/tmp/`uuidgen`
+PAYLOAD="$SOURCE/PAYLOAD"
+mkdir -p "$PAYLOAD"
+
+if [ ! -f "$TRANSFER_KEY" ]; then
+    expect -c "
+        spawn ssh-keygen -f "$TRANSFER_KEY" 
+        expect \"(empty for no passphrase):\" 
+        send \"\n\"
+        expect \"Enter same passphrase again:\"
+        send \"\n\"
+        interact
+    "
+fi
+
+cp "$TRANSFER_KEY" "$KEYMAKER" "$PAYLOAD"
+make_postinstall "$TRANSFER_KEY" \
+                 "$servername" \
+                 "$username" \
+                 `basename "$KEYMAKER"` \
+                 `basename "$SOURCE" \
+                > $SOURCE/postinstall
+chmod 755 $SOURCE/postinstall
 
