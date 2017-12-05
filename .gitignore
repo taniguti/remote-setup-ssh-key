@@ -37,3 +37,4 @@ inc/
 .DS_Store
 .*.swp
 transfer-keys/*
+packages/*
