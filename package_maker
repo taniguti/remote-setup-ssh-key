@@ -41,21 +41,21 @@ do
     esac
 done
 
-if [ `uname` != Darwin ]; then SHOW_HELP=yes ;fi
-if [ ${username}X = X ]; then SHOW_HELP=yes ;fi
-if [ ${servername}X = X ]; then SHOW_HELP=yes ;fi
-if [ ${SHOW_HELP:-no} = yes ]; then myhelp ;fi
+if [ "$( uname )" != Darwin ]; then SHOW_HELP=yes ;fi
+if [ "${username}X" = X ]; then SHOW_HELP=yes ;fi
+if [ "${servername}X" = X ]; then SHOW_HELP=yes ;fi
+if [ "${SHOW_HELP:-no}" = yes ]; then myhelp ;fi
 
-SCRIPTDIR=`dirname $0`
+SCRIPTDIR="$( dirname "$0" )"
 TRANSFER_KEY="${SCRIPTDIR}/transfer-keys/transfer_${username}_${servername}.rsa"
 KEYMAKER="${SCRIPTDIR}/scripts/ssh-key-maker"
-SOURCE=/tmp/`uuidgen`
+SOURCE="/tmp/$( uuidgen )"
 PAYLOAD="$SOURCE/PAYLOAD"
 mkdir -p "$PAYLOAD"
 
 if [ ! -f "$TRANSFER_KEY" ]; then
     expect -c "
-        spawn ssh-keygen -f "$TRANSFER_KEY" 
+        spawn ssh-keygen -f \"$TRANSFER_KEY\" 
         expect \"(empty for no passphrase):\" 
         send \"\n\"
         expect \"Enter same passphrase again:\"
@@ -68,8 +68,8 @@ cp "$TRANSFER_KEY" "$KEYMAKER" "$PAYLOAD"
 make_postinstall "$TRANSFER_KEY" \
                  "$servername" \
                  "$username" \
-                 `basename "$KEYMAKER"` \
-                 `basename "$SOURCE" \
-                > $SOURCE/postinstall
-chmod 755 $SOURCE/postinstall
+                 "$( basename "$KEYMAKER" )" \
+                 "$( basename "$SOURCE" )" \
+                > "$SOURCE/postinstall"
 
+chmod 755 "$SOURCE/postinstall"
