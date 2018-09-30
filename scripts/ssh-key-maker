@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ `uname` != Darwin ]; then exit 1 ;fi
+if [ "$( uname )" != Darwin ]; then exit 1 ;fi
 
 REMOTE_SERVER=$1
 TRANSFER_KEY=$2
@@ -8,15 +8,15 @@ USER_NAME=$3
 
 SSH_DIR="$HOME/.ssh"
 PRIVATE_KEY_FILE="ssh_id_$$.rsa"
-KEYPASS=`uuidgen`
+KEYPASS="$( uuidgen )"
 PRIVATE_KEY="${SSH_DIR}/${PRIVATE_KEY_FILE}"
 PUBLIC_KEY="${SSH_DIR}/${PRIVATE_KEY_FILE}.pub"
 
-mkdir -p   "$SSH_DIR"
-chmod 700  "$SSH_DIR"
+mkdir -p  "$SSH_DIR"
+chmod 700 "$SSH_DIR"
 
 expect -c "
-    spawn ssh-keygen -f $PRIVATE_KEY
+    spawn ssh-keygen -f \"$PRIVATE_KEY\"
     expect \"(empty for no passphrase):\" 
     send \"$KEYPASS\n\"
     expect \"Enter same passphrase again:\"
@@ -25,13 +25,13 @@ expect -c "
 "
 
 expect -c "
-    spawn ssh-add -K $PRIVATE_KEY
+    spawn ssh-add -K \"$PRIVATE_KEY\"
     expect \".rsa:\"
     send \"$KEYPASS\n\"
     interact
 "
 
-if [ ${REMOTE_SERVER}X = X ]; then exit 0 ;fi
-if [ ${TRANSFER_KEY}X = X  ]; then exit 0 ;fi
-if [ ${USER_NAME}X = X ]; then USER_NAME=`whoami`; fi
-scp -i $TRANSFER_KEY $PUBLIC_KEY ${USER_NAME}@${REMOTE_SERVER}:.ssh/ 
+if [ "${REMOTE_SERVER}X" = X ]; then exit 0 ;fi
+if [ "${TRANSFER_KEY}X" = X  ]; then exit 0 ;fi
+if [ "${USER_NAME}X" = X ]; then USER_NAME="$( whoami )" ; fi
+scp -i "$TRANSFER_KEY" "$PUBLIC_KEY" "${USER_NAME}@${REMOTE_SERVER}:.ssh/"
